@@ -1,9 +1,9 @@
-import Fastify from 'fastify';
-import buildHtmlDoc from './buildHtmlDoc';
-import renderApp from './renderApp';
-import * as fs from 'fs';
-import { startMswServer } from '../mock-server/server';
-import { wipeCache } from '../../src/utils/caching-fetch-library/cachingFetch';
+const Fastify = require("fastify")();
+import buildHtmlDoc from "./buildHtmlDoc";
+import renderApp from "./renderApp";
+import * as fs from "fs";
+import { startMswServer } from "../mock-server/server";
+import { wipeCache } from "../../src/utils/caching-fetch-library/cachingFetch";
 
 const runServer = async () => {
   // start the msw server
@@ -13,22 +13,27 @@ const runServer = async () => {
     logger: true,
   });
 
+  //integrate with nextjs
+  fastify.register(require("@fastify/nextjs")).after(() => {
+    fastify.next("/page");
+  });
+
   // serve the framwork runtime
-  const clientJs = fs.readFileSync('./dist/client.js');
-  fastify.get('/client.js', async (request, reply) => {
-    reply.header('content-type', 'text/javascript').send(clientJs);
+  const clientJs = fs.readFileSync("./dist/client.js");
+  fastify.get("/client.js", async (request, reply) => {
+    reply.header("content-type", "text/javascript").send(clientJs);
   });
 
   // serve the service worker for msw to work in the browser
-  const mswJs = fs.readFileSync('./dist/mockServiceWorker.js');
-  fastify.get('/mockServiceWorker.js', async (request, reply) => {
-    reply.header('content-type', 'text/javascript').send(mswJs);
+  const mswJs = fs.readFileSync("./dist/mockServiceWorker.js");
+  fastify.get("/mockServiceWorker.js", async (request, reply) => {
+    reply.header("content-type", "text/javascript").send(mswJs);
   });
 
   // serve a static landing page to provide links to the two versions of the app
-  fastify.get('/', async (request, reply) => {
+  fastify.get("/page", async (request, reply) => {
     reply
-      .header('content-type', 'text/html')
+      .header("content-type", "text/html")
       .send(
         buildHtmlDoc(
           [
@@ -40,18 +45,18 @@ const runServer = async () => {
   });
 
   // serve the application, with data loader on the server
-  fastify.get('/appWithSSRData', async (request, reply) => {
+  fastify.get("/appWithSSRData", async (request, reply) => {
     wipeCache();
     reply
-      .header('content-type', 'text/html')
+      .header("content-type", "text/html")
       .send(buildHtmlDoc(await renderApp(true)));
   });
 
   // serve the application, without data loader on the server
-  fastify.get('/appWithoutSSRData', async (request, reply) => {
+  fastify.get("/appWithoutSSRData", async (request, reply) => {
     wipeCache();
     reply
-      .header('content-type', 'text/html')
+      .header("content-type", "text/html")
       .send(buildHtmlDoc(await renderApp(false)));
   });
 

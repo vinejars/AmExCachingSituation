@@ -23,7 +23,6 @@ const App: Application = () => {
   if (error || rawData === null) return <div>Error: {error?.message}</div>;
 
   const data = validateData(rawData);
-
   return (
     <RootLayout>
       <h1>Welcome to the People Directory</h1>
